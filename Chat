@@ -1,0 +1,446 @@
+Вот пример реализации теста test_text_box.py с использованием pytest и selenium:
+📁 Структура проекта
+homework_tests/
+└── test_text_box.py
+✅ Код теста test_text_box.py
+import pytest
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.keys import Keys
+import time
+
+
+def test_text_box():
+    # Настройки браузера (чтобы не выскакивало окно)
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # без графического интерфейса
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+
+    # Инициализация драйвера
+    driver = webdriver.Chrome(options=chrome_options)
+
+    try:
+        # a. Перейти на страницу
+        driver.get("https://demoqa.com/text-box")
+
+        # Переменные с тестовыми данными
+        full_name_text = "Иван Иванов"
+        address_text = "г. Москва, ул. Пушкина, д. 10"
+
+        # b. Ввести данные в поля
+        driver.find_element(By.ID, "userName").send_keys(full_name_text)
+        driver.find_element(By.ID, "currentAddress").send_keys(address_text)
+
+        # c. Нажать кнопку Submit
+        driver.find_element(By.ID, "submit").click()
+
+        time.sleep(1)  # небольшая пауза, чтобы страница обновилась
+
+        # d. Проверить, что появились 2 элемента с нашим текстом
+        output_name = driver.find_element(By.ID, "name").text
+        output_address = driver.find_element(By.ID, "currentAddress").text
+
+        # Проверяем, что введённый текст совпадает
+        assert full_name_text in output_name, f"Имя не совпадает: {output_name}"
+        assert address_text in output_address, f"Адрес не совпадает: {output_address}"
+
+    finally:
+        driver.quit()
+🧪 Как запустить тест
+Установите зависимости:
+pip install selenium pytest
+Убедитесь, что у вас установлен Chrome и драйвер (можно через webdriver-manager):
+pip install webdriver-manager
+Тогда инициализацию можно немного изменить:
+from webdriver_manager.chrome import ChromeDriverManager
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+Запуск теста:
+pytest homework_tests/test_text_box.py -v
+Хочешь, я добавлю версию теста, где драйвер автоматически скачивается через webdriver-manager (без ручной установки chromedriver)?
+Вы сказали:
+в твоем решении output_name и  output_address что такое? 
+ChatGPT сказал:
+Отличный вопрос 👍
+Давай разберём этот момент подробно 👇
+
+После нажатия на кнопку Submit на странице https://demoqa.com/text-box, под формой появляются новые HTML-элементы, где отображаются введённые данные.
+Вот как выглядит структура (упрощённо):
+
+<div id="output" class="border col-md-12 col-sm-12">
+    <p id="name" class="mb-1">Name: Иван Иванов</p>
+    <p id="email" class="mb-1">Email:</p>
+    <p id="currentAddress" class="mb-1">Current Address : г. Москва, ул. Пушкина, д. 10</p>
+    <p id="permanentAddress" class="mb-1">Permanent Address :</p>
+</div>
+🔍 Что делает код:
+После клика на кнопку:
+driver.find_element(By.ID, "submit").click()
+Мы ищем эти элементы, чтобы проверить текст:
+output_name = driver.find_element(By.ID, "name").text
+output_address = driver.find_element(By.ID, "currentAddress").text
+output_name — это строка, содержащая текст из элемента <p id="name">,
+например:
+"Name: Иван Иванов"
+output_address — это строка из элемента <p id="currentAddress">,
+например:
+"Current Address : г. Москва, ул. Пушкина, д. 10"
+✅ Поэтому проверки такие:
+assert full_name_text in output_name
+assert address_text in output_address
+Мы не сравниваем строки "в лоб" (==), потому что на странице выводятся дополнительные слова "Name:" и "Current Address :".
+Вместо этого мы проверяем, что наш введённый текст содержится внутри результата.
+Хочешь, я покажу версию кода, где мы более явно разделяем текст (например, удаляем "Name:" и сравниваем точно по значениям)?
+Вы сказали:
+покажи
+ChatGPT сказал:
+Отлично 👍
+Вот улучшенная версия теста test_text_box.py, где мы явно очищаем текст от лишних слов "Name:" и "Current Address :", чтобы сравнение было точным.
+✅ test_text_box.py
+import pytest
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+import time
+
+
+def test_text_box():
+    # Настройки браузера
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+
+    # Инициализация драйвера
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+
+    try:
+        # a. Перейти на страницу
+        driver.get("https://demoqa.com/text-box")
+
+        # Тестовые данные
+        full_name_text = "Иван Иванов"
+        address_text = "г. Москва, ул. Пушкина, д. 10"
+
+        # b. Ввод данных
+        driver.find_element(By.ID, "userName").send_keys(full_name_text)
+        driver.find_element(By.ID, "currentAddress").send_keys(address_text)
+
+        # c. Нажать Submit
+        driver.find_element(By.ID, "submit").click()
+
+        time.sleep(1)  # подождать появления результата
+
+        # d. Считать текст из результата
+        output_name_raw = driver.find_element(By.ID, "name").text      # "Name: Иван Иванов"
+        output_address_raw = driver.find_element(By.ID, "currentAddress").text  # "Current Address : г. Москва, ул. Пушкина, д. 10"
+
+        # Очистка от служебных слов
+        output_name = output_name_raw.replace("Name:", "").strip()
+        output_address = output_address_raw.replace("Current Address :", "").strip()
+
+        # Проверка совпадений
+        assert output_name == full_name_text, f"Ожидалось '{full_name_text}', получено '{output_name}'"
+        assert output_address == address_text, f"Ожидалось '{address_text}', получено '{output_address}'"
+
+    finally:
+        driver.quit()
+🔍 Что изменилось
+Было	Стало
+Сравнение через in	Точное сравнение через ==
+Лишние слова типа "Name:"	Удаляются через .replace()
+Явная обработка текста	Более чистые проверки
+💡 Пример работы:
+Если ввели:
+Full Name: Иван Иванов
+Current Address: г. Москва, ул. Пушкина, д. 10
+На выходе после очистки получаем:
+output_name = "Иван Иванов"
+output_address = "г. Москва, ул. Пушкина, д. 10"
+и тест проходит ✅.
+Хочешь, я добавлю ещё и вариант с параметризацией через pytest.mark.parametrize, чтобы можно было прогонять несколько наборов данных (разные имена и адреса)?
+Вы сказали:
+здесь два одинаковых css selector - как мне их отличать?
+ChatGPT сказал:
+Отличный вопрос 💡 — это действительно тонкий момент!
+Ты абсолютно прав: после нажатия Submit на странице https://demoqa.com/text-box, в DOM остаются два элемента с одинаковыми ID — например, "currentAddress".
+⚠️ Проблема:
+На странице есть:
+<textarea id="currentAddress" ...></textarea>   <!-- поле ввода -->
+<p id="currentAddress" class="mb-1">Current Address : ...</p>  <!-- вывод результата -->
+Оба имеют одинаковый ID, что нарушает стандарт HTML (ID должен быть уникальным).
+Но сайт demoqa сделан специально для тестирования, поэтому такое поведение — специально оставленная "ловушка" 😄
+🔧 Решения (3 способа):
+✅ 1. Использовать XPath, который уточняет контекст
+Самый надёжный способ — искать элемент в блоке #output, который появляется только после отправки формы.
+# Вместо driver.find_element(By.ID, "currentAddress")
+output_address_element = driver.find_element(By.XPATH, "//div[@id='output']//p[@id='currentAddress']")
+output_address = output_address_element.text
+→ Это выберет именно второй элемент, который находится внутри блока div#output.
+✅ 2. Использовать CSS-селектор с родителем
+Аналогичная логика, но через CSS:
+output_address_element = driver.find_element(By.CSS_SELECTOR, "#output #currentAddress")
+→ Это тоже выберет тот, что внизу под результатами.
+✅ 3. Использовать метод find_elements() и взять второй элемент
+Можно получить все совпадения, а потом взять нужный по индексу:
+elements = driver.find_elements(By.ID, "currentAddress")
+output_address = elements[1].text  # [0] — поле ввода, [1] — результат
+Однако этот способ менее надёжен — если структура страницы изменится, тест может упасть.
+💡 Рекомендую:
+Использовать XPath или CSS с родителем, это самый надёжный и читаемый вариант.
+🔁 Исправленный фрагмент из теста:
+output_name_raw = driver.find_element(By.CSS_SELECTOR, "#output #name").text
+output_address_raw = driver.find_element(By.CSS_SELECTOR, "#output #currentAddress").text
+Теперь тест всегда возьмёт нужные элементы из результатов, даже если на странице останутся поля ввода с теми же ID. ✅
+Хочешь, я покажу финальную полную версию теста с этим исправлением и короткими комментариями?
+Вы сказали:
+я написала по заданию такой тест. Как мне выполнить проверку значения теперь7 from components.components import WebElement
+from pages.base_page import BasePage
+
+class TextBox(BasePage):
+
+    def __init__(self, driver):
+        self.base_url = 'https://demoqa.com/text-box'
+        super().__init__(driver, self.base_url)
+
+        self.full_name = WebElement(driver, '#userName')
+        self.current_address = WebElement(driver, '#currentAddress')
+        self.btn_submit = WebElement(driver, '#submit')
+        self.output_full_name = WebElement(driver, '#name')
+        self.output_current_address = WebElement(driver, '#output #currentAddress')
+
+
+
+
+
+from pages.text_box_clear import TextBox
+import time
+
+def test_clear(browser):
+    text_box = TextBox(browser)
+
+    text_box.visit()
+    text_box.full_name.send_keys('testirovich')
+    text_box.current_address.send_keys('Moscow')
+    text_box.btn_submit.click()
+    time.sleep(1)
+ChatGPT сказал:
+Отлично 👏 — ты уже всё правильно структурировала: у тебя есть Page Object (TextBox) и тест, который его использует.
+Осталось добавить проверку (assert), чтобы убедиться, что после нажатия Submit на странице появились правильные значения.
+🔍 Что у тебя сейчас:
+self.output_full_name и self.output_current_address — это элементы, которые показывают результат.
+После клика на кнопку submit страница показывает, например:
+<p id="name">Name: testirovich</p>
+<p id="currentAddress">Current Address : Moscow</p>
+✅ Как добавить проверку
+Вот финальный вариант твоего теста с проверкой значений:
+from pages.text_box_clear import TextBox
+import time
+
+
+def test_clear(browser):
+    text_box = TextBox(browser)
+
+    text_box.visit()
+
+    # Вводим данные
+    name_value = 'testirovich'
+    address_value = 'Moscow'
+
+    text_box.full_name.send_keys(name_value)
+    text_box.current_address.send_keys(address_value)
+    text_box.btn_submit.click()
+
+    time.sleep(1)  # короткая пауза для появления результата
+
+    # Проверяем, что текст совпадает
+    full_name_text = text_box.output_full_name.get_text()
+    address_text = text_box.output_current_address.get_text()
+
+    # Удаляем служебные слова
+    full_name_clean = full_name_text.replace('Name:', '').strip()
+    address_clean = address_text.replace('Current Address :', '').strip()
+
+    # Проверка
+    assert full_name_clean == name_value, f"Ожидалось '{name_value}', получено '{full_name_clean}'"
+    assert address_clean == address_value, f"Ожидалось '{address_value}', получено '{address_clean}'"
+📘 Что важно:
+✅ get_text() — предполагается, что твой класс WebElement реализует метод получения текста, например:
+class WebElement:
+    def __init__(self, driver, locator):
+        self.driver = driver
+        self.locator = locator
+
+    def find(self):
+        return self.driver.find_element(By.CSS_SELECTOR, self.locator)
+
+    def get_text(self):
+        return self.find().text
+✅ В TextBox ты правильно указала '#output #currentAddress', чтобы не перепутать поле ввода с результатом.
+🧠 Проверку через assert делай именно после .get_text() — иначе ты просто сравниваешь объект WebElement, а не его содержимое.
+Хочешь, я покажу, как можно добавить в WebElement небольшой helper-метод вроде .should_have_text(expected), чтобы проверка была одной строкой в тесте?
+Вы сказали:
+почему здесь приписано слово text  full_name_text?
+ChatGPT сказал:
+Очень хороший вопрос 💡
+Смотри — суффикс _text в названии переменной (full_name_text, address_text) не обязателен, но он помогает понять, что именно хранится в переменной.
+
+🔍 Разберём по шагам:
+В коде есть строчка:
+full_name_text = text_box.output_full_name.get_text()
+👉 Здесь text_box.output_full_name — это объект класса WebElement,
+а метод .get_text() возвращает строку — текст, который находится внутри HTML-элемента на странице.
+Например:
+
+<p id="name">Name: testirovich</p>
+Тогда:
+text_box.output_full_name.get_text()
+# вернёт строку "Name: testirovich"
+💬 Почему добавляем _text в имя переменной
+Это просто удобная привычка разработчиков — по названию переменной сразу видно, что в ней хранится именно текстовое значение, а не объект Selenium.
+Переменная	Что в ней
+output_full_name	объект WebElement (ссылка на элемент DOM)
+full_name_text	строка — текст из этого элемента, например "Name: testirovich"
+🧠 Пример для сравнения
+Без _text:
+full_name = text_box.output_full_name.get_text()
+💬 Работает так же, но из кода неочевидно — это текст или элемент?
+С _text:
+
+full_name_text = text_box.output_full_name.get_text()
+✅ Сразу видно, что здесь строка (результат get_text()).
+То есть это не требование, а рекомендация для читаемости кода.
+Если тебе удобнее, можешь называть просто full_name или result_name — это не повлияет на работу теста.
+Хочешь, я покажу стильный вариант теста с короткими и читаемыми именами переменных, где _text не используется, но структура остаётся аккуратной?
+Вы сказали:
+Да, покажи без _text 
+ChatGPT сказал:
+Отлично 💪 — вот аккуратная и «чистая» версия твоего теста без суффикса _text, но с понятными названиями и той же логикой.
+✅ Финальный вариант теста (test_clear.py)
+from pages.text_box_clear import TextBox
+import time
+
+
+def test_clear(browser):
+    text_box = TextBox(browser)
+
+    text_box.visit()
+
+    # Тестовые данные
+    name = 'testirovich'
+    address = 'Moscow'
+
+    # Ввод данных
+    text_box.full_name.send_keys(name)
+    text_box.current_address.send_keys(address)
+    text_box.btn_submit.click()
+
+    time.sleep(1)  # даём странице обновиться
+
+    # Получаем текст из результатов
+    full_name = text_box.output_full_name.get_text()
+    current_address = text_box.output_current_address.get_text()
+
+    # Убираем лишние подписи, чтобы сравнить только значения
+    full_name = full_name.replace('Name:', '').strip()
+    current_address = current_address.replace('Current Address :', '').strip()
+
+    # Проверки
+    assert full_name == name, f"Ожидалось '{name}', получено '{full_name}'"
+    assert current_address == address, f"Ожидалось '{address}', получено '{current_address}'"
+💬 Почему это вариант лучше читается
+имена переменных короткие и отражают смысл данных;
+нет дублирования (full_name_text → full_name);
+структура простая:
+ввод → получение результата → очистка → проверка.
+💡 Альтернатива для будущего (ещё чище)
+Если хочешь, можешь добавить в свой WebElement метод вроде:
+def text_clean(self, prefix):
+    return self.get_text().replace(prefix, '').strip()
+И тогда проверки можно писать одной строкой:
+assert text_box.output_full_name.text_clean('Name:') == name
+assert text_box.output_current_address.text_clean('Current Address :') == address
+Хочешь, я покажу, как добавить этот метод text_clean в класс WebElement, чтобы твои тесты выглядели ещё короче и аккуратнее?
+Вы сказали:
+Расскажи подробнее про метод def text_clean(self, prefix):
+    return self.get_text().replace(prefix, '').strip()
+ChatGPT сказал:
+Отличный вопрос 👏 — давай разберём этот метод подробно, пошагово, чтобы было понятно, что он делает, зачем нужен, и куда его добавить.
+💡 Идея
+Когда ты берёшь текст из элемента на странице, например:
+<p id="name">Name: testirovich</p>
+и делаешь:
+element.get_text()
+→ получаешь строку:
+"Name: testirovich"
+Но тебе для проверки нужно только "testirovich".
+Вот тут и помогает вспомогательный метод text_clean().
+
+🧩 Как он работает
+def text_clean(self, prefix):
+    return self.get_text().replace(prefix, '').strip()
+Разберём построчно:
+self.get_text()
+— получает текст из HTML-элемента, например "Name: testirovich"
+.replace(prefix, '')
+— удаляет лишний кусок текста (то, что передаётся в prefix, например "Name:").
+Результат: " testirovich"
+
+.strip()
+— убирает пробелы по краям строки.
+Результат: "testirovich"
+📦 Куда добавить метод
+Этот метод добавляется в твой класс WebElement, который, судя по структуре проекта, находится в файле
+components/components.py (или просто components.py).
+Пример реализации:
+
+from selenium.webdriver.common.by import By
+
+class WebElement:
+
+    def __init__(self, driver, locator):
+        self.driver = driver
+        self.locator = locator
+
+    def find(self):
+        return self.driver.find_element(By.CSS_SELECTOR, self.locator)
+
+    def get_text(self):
+        return self.find().text
+
+    def send_keys(self, value):
+        self.find().send_keys(value)
+
+    def click(self):
+        self.find().click()
+
+    # 👇 Новый метод:
+    def text_clean(self, prefix):
+        """Возвращает текст элемента без заданного префикса (например 'Name:' или 'Current Address :')"""
+        return self.get_text().replace(prefix, '').strip()
+✅ Как использовать в тесте
+Теперь твой тест можно сделать короче и чище:
+def test_clear(browser):
+    text_box = TextBox(browser)
+    text_box.visit()
+
+    name = 'testirovich'
+    address = 'Moscow'
+
+    text_box.full_name.send_keys(name)
+    text_box.current_address.send_keys(address)
+    text_box.btn_submit.click()
+
+    # Проверки с использованием text_clean()
+    assert text_box.output_full_name.text_clean('Name:') == name
+    assert text_box.output_current_address.text_clean('Current Address :') == address
+🧠 Преимущества подхода
+Было	Стало
+Много строк очистки текста в тестах	Вынесено в один метод
+Повторение .replace() и .strip()	Универсальный helper
+Тесты громоздкие	Тесты короткие и читаемые
+Хочешь, я покажу, как можно сделать этот метод ещё универсальнее — например, чтобы он автоматически понимал, какой префикс удалить (без передачи аргумента)?
