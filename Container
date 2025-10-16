@@ -23,3 +23,10 @@ def test_select_state_via_input(browser):
 
     # Проверим, что значение применилось
     time.sleep(1)
+
+
+
+
+
+(By.CSS_SELECTOR, "input[id^='react-select-'][id$='-input']")
+
