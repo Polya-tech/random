@@ -1,0 +1,25 @@
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time
+
+def test_select_state_via_input(browser):
+    browser.get("https://demoqa.com/automation-practice-form")
+    wait = WebDriverWait(browser, 10)
+
+    # Кликаем по контейнеру
+    state_container = wait.until(EC.element_to_be_clickable((By.ID, "state")))
+    state_container.click()
+
+    # Теперь ждём появления настоящего input
+    state_input = wait.until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "input[id^='react-select-'][id$='-input']"))
+    )
+
+    # Вводим название штата и нажимаем ENTER
+    state_input.send_keys("NCR")
+    state_input.send_keys(Keys.ENTER)
+
+    # Проверим, что значение применилось
+    time.sleep(1)
